@@ -15,22 +15,29 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.text.isDigitsOnly
 import com.example.hanoi.presenters.HanoiContract
 import com.example.hanoi.presenters.HanoiPresenter
 import com.example.hanoi.ui.theme.HanoiTheme
@@ -59,6 +66,8 @@ class MainActivity : ComponentActivity(), HanoiContract.View {
     fun StartScreen() {
         var discos by remember { mutableIntStateOf(4) }
         var currentView by remember { mutableIntStateOf(0) }
+        val keyboardController = LocalSoftwareKeyboardController.current
+        var input by remember { mutableStateOf("") }
         Column(modifier = Modifier.fillMaxSize()) {
             Spacer(modifier = Modifier.height(25.dp))
             OutlinedTextField(
@@ -73,23 +82,40 @@ class MainActivity : ComponentActivity(), HanoiContract.View {
             Spacer(modifier = Modifier.height(25.dp))
             Button(modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 36.dp, end = 36.dp), onClick = { presenter.getDisksFromBE { discos = it }}) {
+                .padding(start = 36.dp, end = 36.dp),
+                onClick = { presenter.getDisksFromBE {
+                    input = it.toString()q
+                    discos = it
+                } }) {
                 Text(text = "Obtener numero de discos")
             }
             Spacer(modifier = Modifier.height(25.dp))
             Row {
                 Text(
-                    text = "Numero de discos: $discos",
+                    text = "Numero de discos:",
                     modifier = Modifier
                         .align(Alignment.CenterVertically)
                         .padding(start = 32.dp)
                 )
+                TextField(
+                    modifier = Modifier
+                        .width(50.dp)
+                        .align(Alignment.CenterVertically)
+                        .padding(start = 5.dp),
+                    value = input,
+                    onValueChange = { newText -> input = newText },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
                 Button(
                     onClick = {
-                        startOrder(discos)
-                        currentView = 1
+                        if (input.isNotEmpty() && input.isDigitsOnly()) {
+                            discos = Integer.valueOf(input)
+                            startOrder(discos)
+                            currentView = 1
+                            keyboardController?.hide()
+                        }
                     },
-                    modifier = Modifier.padding(start = 48.dp)
+                    modifier = Modifier.padding(start = 12.dp)
                 ) {
                     Text(text = "Comenzar")
                 }
@@ -132,7 +158,7 @@ class MainActivity : ComponentActivity(), HanoiContract.View {
             )
             Box(
                 modifier = Modifier
-                    .padding(32.dp)
+                    .padding(16.dp)
                     .fillMaxWidth()
             ) {
                 Button(onClick = { stepIndex++ }) {
